@@ -1,6 +1,8 @@
 package v1.servlet;
 
 import util.StreamUtil;
+
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -14,13 +16,14 @@ public class SocketRequest {
         this.inputStream = inputStream;
     }
 
-    public void parse(){
+    public void parse() throws IOException {
         String res = StreamUtil.inputStream2String(inputStream);
         System.out.println(res);
 
         // GET /index.html HTTP/1.1 的形式
         if( null!=res && res.contains(" ")){
-            this.uri = res.split(" ")[1];
+            String uri = res.split(" ")[1];
+            this.uri = "classpath:" + SocketServer.WEB_ROOT + uri;
         }
     }
 

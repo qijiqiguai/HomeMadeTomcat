@@ -24,7 +24,7 @@ public class FileUtil {
         BufferedReader reader = null;
         String result = null;
         try {
-            File file = getFile(fileName);
+            File file = getClassPathFile(fileName);
             reader = new BufferedReader(new FileReader(file));
             String tempString = null;
             // 一次读入一行，直到读入null为文件结束
@@ -49,11 +49,11 @@ public class FileUtil {
         return result;
     }
 
-    public static String readFile(String fileName) {
+    public static String readFileContent(String fileName) {
         BufferedReader reader = null;
         StringBuffer sb = null;
         try {
-            File file = getFile(fileName);
+            File file = getClassPathFile(fileName);
             sb = new StringBuffer();
             reader = new BufferedReader(new FileReader(file));
             String tempString = null;
@@ -80,7 +80,7 @@ public class FileUtil {
         return sb==null ? null : sb.toString();
     }
 
-    private static File getFile(String fileName) throws URISyntaxException {
+    private static File getClassPathFile(String fileName) throws URISyntaxException {
         if(fileName.contains("classpath:")){
             ClassLoader classLoader = FileUtil.class.getClassLoader();
             URL url = classLoader.getResource(fileName.replaceAll("classpath:", ""));

@@ -21,7 +21,7 @@ public class SocketResponse {
     }
 
     public void sendStaticFile() throws IOException {
-        String fileContent = FileUtil.readFile(request.getUri());
+        String fileContent = FileUtil.readFileContent(request.getUri());
         if(null == fileContent ){
             String error = " HTTP/1.1 404 File Not Found ya \r\n" +
                     "Content-type: text/html \r\n" +
@@ -32,5 +32,6 @@ public class SocketResponse {
         }else {
             outputStream.write(fileContent.getBytes());
         }
+        outputStream.flush();
     }
 }
