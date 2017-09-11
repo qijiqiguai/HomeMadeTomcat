@@ -40,7 +40,6 @@ public class SocketServer {
             Socket socket = null;
             InputStream inStream = null;
             OutputStream outStream = null;
-
             try {
                 socket = serverSocket.accept();
                 inStream = socket.getInputStream();
@@ -49,16 +48,12 @@ public class SocketServer {
                 SocketRequest request = new SocketRequest(inStream);
                 request.parse();
 
-                SocketResponse response = new SocketResponse(outStream);
-                response.setRequest(request);
+                SocketResponse response = new SocketResponse(outStream, request);
                 response.sendStaticFile();
 
-                inStream.close();
-                outStream.close();
                 socket.close();
 
                 shutdown = request.getUri().equals(SHUTDOWN_CMD);
-
             }catch (Exception e) {
                 e.printStackTrace();
                 continue;
