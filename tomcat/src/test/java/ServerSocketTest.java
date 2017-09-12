@@ -4,11 +4,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ServerSocketTest {
-    private OutputStream outputStream;
-    private InputStream inputStream;
-    private BufferedReader reader;
-    private PrintWriter writer;
-
     public static void main(String[] args) {
         ServerSocketTest server = new ServerSocketTest();
         server.startServer();
@@ -19,21 +14,20 @@ public class ServerSocketTest {
             System.out.println("服务器启动>>> 8080端口");
             while(true){//开启一个永远的循环，一直等待客户访问80端口
                 Socket socket = serverSocket.accept();
-//                es.submit(new Handler(socket));
-//                System.out.println("收到新请求");
-                inputStream = socket.getInputStream();//服务器到客户的输出流
-                outputStream = socket.getOutputStream();//客户到服务器的输入流
-                reader = new BufferedReader(new InputStreamReader(inputStream));//包装后的输入缓冲字符流
-                writer = new PrintWriter(new OutputStreamWriter(outputStream));//包装后的输出缓冲字符流
-                String msg;//接收客户端请求的临时字符串
-                StringBuffer request = new StringBuffer();//将请求拼接成完整的请求
-                while((msg = reader.readLine()) != null && msg.length() > 0){
-                    request.append(msg);
-                    request.append("\n");//HTTP协议的格式
-                }
-                String[] msgs = request.toString().split(" ");//HTTP协议以空格为分隔符
+                InputStream inputStream = socket.getInputStream();//服务器到客户的输出流
+                OutputStream outputStream = socket.getOutputStream();//客户到服务器的输入流
+
+//                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));//包装后的输入缓冲字符流
+//                String msg;//接收客户端请求的临时字符串
+//                StringBuffer request = new StringBuffer();//将请求拼接成完整的请求
+//                while((msg = reader.readLine()) != null && msg.length() > 0){
+//                    request.append(msg);
+//                    request.append("\n");//HTTP协议的格式
+//                }
+//                String[] msgs = request.toString().split(" ");//HTTP协议以空格为分隔符
                 //msgs[1]代表了HTTP协议中的第二个字符串，是浏览器请求的文件名
 
+                PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream));//包装后的输出缓冲字符流
                 String info = "HTTP/1.1 200 OK \r\n" +
                         "Content-type: text/html \r\n" +
                         "Content-Length: 23\r\n" +
@@ -43,9 +37,10 @@ public class ServerSocketTest {
                 writer.close();
                 //如果不发送，就直接返回
 
-                outputStream.close();
-                inputStream.close();
-                reader.close();
+//                outputStream.close();
+//                inputStream.close();
+//                reader.close();
+                socket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();

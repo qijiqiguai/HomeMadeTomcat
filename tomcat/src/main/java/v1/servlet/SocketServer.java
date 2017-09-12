@@ -1,8 +1,6 @@
 package v1.servlet;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -51,14 +49,21 @@ public class SocketServer {
                 SocketResponse response = new SocketResponse(outStream, request);
                 response.sendStaticFile();
 
-                socket.close();
+                shutdown = request.getUri().endsWith(SHUTDOWN_CMD);
 
-                shutdown = request.getUri().equals(SHUTDOWN_CMD);
+//                throw new IllegalArgumentException("message");
             }catch (Exception e) {
                 e.printStackTrace();
-                continue;
+                SocketResponse.sendError(outStream, e);
+            }finally {
+                if(socket != null){
+                    try {
+                        socket.close();
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
+                }
             }
-
         }
     }
 }

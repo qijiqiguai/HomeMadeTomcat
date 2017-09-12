@@ -11,23 +11,29 @@ import java.io.InputStream;
 public class SocketRequest {
     private InputStream inputStream;
     private String uri;
+    private String fullReq;
 
     public SocketRequest(InputStream inputStream) {
         this.inputStream = inputStream;
     }
 
-    public void parse() throws IOException {
-        String res = StreamUtil.inputStream2String(inputStream);
-        System.out.println(res);
+    public SocketRequest parse() throws IOException {
+        fullReq = StreamUtil.httpRequestToString(inputStream);
+//        System.out.println(fullReq);
 
         // GET /index.html HTTP/1.1 的形式
-        if( null!=res && res.contains(" ")){
-            String uri = res.split(" ")[1];
+        if( null!=fullReq && !"".equals(fullReq) && fullReq.contains(" ")){
+            String uri = fullReq.split(" ")[1];
             this.uri = "classpath:" + SocketServer.WEB_ROOT + uri;
         }
+        return this;
     }
 
     public String getUri() {
         return uri;
+    }
+
+    public String getFullReq(){
+        return fullReq;
     }
 }

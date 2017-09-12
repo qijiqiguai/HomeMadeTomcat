@@ -15,7 +15,7 @@ public class FileUtil {
             fileWriter = new FileWriter(file);
             fileWriter.write(input);
             fileWriter.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -34,15 +34,14 @@ public class FileUtil {
                 }
             }
             reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e1) {
+                    //DO NOTHING
                 }
             }
         }
@@ -64,16 +63,14 @@ public class FileUtil {
                 line++;
             }
             System.out.println(fileName + " 文件一共 " + line + " 行。。。");
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e1) {
+                    // Do Nothing
                 }
             }
         }

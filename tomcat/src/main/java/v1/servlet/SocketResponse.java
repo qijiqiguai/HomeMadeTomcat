@@ -2,7 +2,6 @@ package v1.servlet;
 
 import util.FileUtil;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -19,10 +18,12 @@ public class SocketResponse {
         this.request = request;
     }
 
-    public void sendStaticFile() throws IOException {
+    public void sendStaticFile() {
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream));//包装后的输出缓冲字符流
-        String fileContent = FileUtil.readFileContent(request.getUri());
+        String fileContent = FileUtil.readFileContent( request.getUri() );
         String info;
+        // *** 一定要用HTTP标准格式返回，否则浏览器无法做解析，从而出现请求失败
+        // http://blog.csdn.net/liuwenjie517333813/article/details/68060914
         if(null == fileContent ) {
             info = "HTTP/1.1 404 File Not Found \r\n" +
                    "Content-type: text/html \r\n" +
@@ -36,8 +37,19 @@ public class SocketResponse {
                    "\r\n" +
                    fileContent;
         }
-        writer.println(info);//如果服务器不打算对客户端发送.ico结尾的文件，可以这一写，然后直接返回，跳过发送该文件的过程
+        writer.println(info);
         writer.close();
-        outputStream.close();
+    }
+
+    public static void sendError(OutputStream outputStream, Exception e) {
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream));//包装后的输出缓冲字符流
+        String info = "HTTP/1.1 404 File Not Found \r\n" +
+                    "Content-type: text/html \r\n" +
+                    "Content-Length: 23\r\n" +
+                    "\r\n" +
+                    "<h1> Unexpected Exception </h1></br>" +
+                    e.getMessage();
+        writer.println(info);
+        writer.close();
     }
 }
