@@ -1,30 +1,32 @@
-package v1.servlet;
+package v2.servlet;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 /**
- * Created by wangqi on 2017/9/2 下午10:32.
+ * Created by wangqi on 2017/9/26 下午7:17.
  */
-public class SocketServer {
-    public static final String WEB_ROOT = "webroot";
+public class ServletServer {
     private static final String SHUTDOWN_CMD = "/SHUTDOWN";
     private static boolean shutdown = false;
 
     public static void main(String[] args) {
-        SocketServer ss = new SocketServer();
+        ServletServer ss = new ServletServer();
         ss.await();
     }
 
     public void await() {
         ServerSocket serverSocket = null;
+        ServletProcessor servletProcessor = new ServletProcessor();
         int port = 8080;
         String ip = "127.0.0.1";
         try{
-            serverSocket = new ServerSocket(port, 1, InetAddress.getByName(ip));
+            serverSocket = new ServerSocket(port, 1, InetAddress.getByName(ip)); //基础还是基于Socket的编程
             System.out.println("Init SocketServer @ " + ip + ":" + port);
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -43,18 +45,21 @@ public class SocketServer {
                 inStream = socket.getInputStream();
                 outStream = socket.getOutputStream();
 
-                SocketRequest request = new SocketRequest(inStream);
+                ServletRequestImpl request = new ServletRequestImpl(inStream);
                 request.parse();
 
-                SocketResponse response = new SocketResponse(outStream, request);
-                response.sendStaticFile();
-
+                ServletResponseImpl response = new ServletResponseImpl(outStream, request);
+                if( request.getUri().contains("servlet") ) {
+                    // !!!! 对于Servlet特殊处理
+                    servletProcessor.process(request, response);
+                }else {
+                    response.sendStaticFile();
+                }
                 shutdown = request.getUri().endsWith(SHUTDOWN_CMD);
 
-//                throw new IllegalArgumentException("message");
             }catch (Exception e) {
                 e.printStackTrace();
-                SocketResponse.sendError(outStream, e);
+                ServletResponseImpl.sendError(outStream, e);
             }finally {
                 if(socket != null){
                     try {

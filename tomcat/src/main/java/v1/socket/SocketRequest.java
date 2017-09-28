@@ -1,4 +1,4 @@
-package v1.servlet;
+package v1.socket;
 
 import util.StreamUtil;
 
@@ -9,9 +9,9 @@ import java.io.InputStream;
  * Created by wangqi on 2017/9/2 下午10:47.
  */
 public class SocketRequest {
-    private InputStream inputStream;
-    private String uri;
-    private String fullReq;
+    InputStream inputStream;
+    String uri;
+    String fullReq;
 
     public SocketRequest(InputStream inputStream) {
         this.inputStream = inputStream;
