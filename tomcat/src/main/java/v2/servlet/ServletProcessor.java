@@ -24,8 +24,12 @@ public class ServletProcessor {
         try {
             Class clazz = loadClass(SERVLET_BASE + servletName);
             Servlet servlet = (Servlet) clazz.newInstance();
-            servlet.service( request, response );
 
+            // ServletRequestImpl 中有一些自有方法不是 Servlet API 标准的，那么在 Servlet 实例中应该是不可以访问的。
+            // 利用门面类屏蔽非标准API
+            RequestFacade req = new RequestFacade(request);
+            ResponseFacade res = new ResponseFacade(response);
+            servlet.service( req, res );
         } catch (Exception e) {
             e.printStackTrace();
             ServletResponseImpl.sendError(response.getOriginalOutputStream(), e);
