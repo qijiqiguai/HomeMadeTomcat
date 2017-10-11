@@ -1,0 +1,21 @@
+# Built application files and Maven
+target/
+
+# Log Files
+*.log
+
+# About IntelliJ
+*.iml
+/.idea/*
+/.idea/*/*
+
+# macOS
+.DS_Store
+
+# Package Files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
