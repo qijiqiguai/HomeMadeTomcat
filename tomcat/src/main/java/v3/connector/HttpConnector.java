@@ -1,9 +1,6 @@
 package v3.connector;
 
-import v2.servlet.ServletProcessor;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,13 +10,12 @@ import java.net.UnknownHostException;
  * Created by wangqi on 2017/10/9.
  */
 public class HttpConnector implements Runnable {
-    boolean stoped = false;
+    boolean stopped = false;
     private String scheme = "http";
 
     @Override
     public void run() {
         ServerSocket serverSocket = null;
-        ServletProcessor servletProcessor = new ServletProcessor();
         int port = 8080;
         String ip = "127.0.0.1";
         try{
@@ -33,13 +29,14 @@ public class HttpConnector implements Runnable {
             System.exit(1);
         }
 
-        while (!stoped) {
+        while (!stopped) {
             Socket socket = null;
-            InputStream inStream = null;
-            OutputStream outStream = null;
             try {
                 socket = serverSocket.accept();
+                // 连接器就是连接，不具体做处理
                 HttpProcessor processor = new HttpProcessor();
+                // 如果 process 处理过程是同步的，那么只有等待处理返回之后，while 才会继续，所以这会大大影响连接效率
+                // 可以将 process 改成异步的
                 processor.process(socket);
             }catch (Exception e) {
                 e.printStackTrace();

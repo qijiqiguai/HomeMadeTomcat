@@ -1,7 +1,6 @@
 package v1.socket;
 
-import util.StreamUtil;
-
+import util.HttpUtil;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -18,7 +17,7 @@ public class SocketRequest {
     }
 
     public SocketRequest parse() throws IOException {
-        fullReq = StreamUtil.httpRequestToString(inputStream);
+        fullReq = HttpUtil.httpRequestToString(inputStream);
 //        System.out.println(fullReq);
 
         // GET /index.html HTTP/1.1 的形式
