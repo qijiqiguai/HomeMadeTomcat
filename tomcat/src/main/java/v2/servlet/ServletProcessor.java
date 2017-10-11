@@ -36,6 +36,7 @@ public class ServletProcessor {
         }
     }
 
+    // 这个过程可以单独测试
     private Class loadClass(String name) throws ClassNotFoundException, MalformedURLException {
         ClassLoader classLoader = FileUtil.class.getClassLoader();
         URL repository = classLoader.getResource(""); // 当前Classloader的根目录
