@@ -85,7 +85,7 @@ public class  HttpProcessor {
                     continue;
                 }
                 int index = one.indexOf(":"); //由于Header键值对中可能出现值中包含冒号的情况，所以这里不能用 split
-                String name = one.substring(0, index).trim();
+                String name = one.substring(0, index).trim().toLowerCase(); //Header是大小写不敏感的
                 String value = one.substring(index+1).trim();
                 request.addHeader(name, value);
 
@@ -164,9 +164,9 @@ public class  HttpProcessor {
         // 标准化URL，将其中的转意字符改掉，. 和 .. 等符号做处理，这里是个简化版本
         String normalizedUri = normalize(uri);
         if(null != normalizedUri){
-            request.setRequestURI(normalizedUri);
+            request.setRequestUri(normalizedUri);
         }else{
-            request.setRequestURI(uri);
+            request.setRequestUri(uri);
             throw new ServletException("Invalid URI:" + uri);
         }
     }
