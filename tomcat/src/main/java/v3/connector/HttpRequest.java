@@ -12,17 +12,27 @@ import java.util.*;
  */
 public class HttpRequest implements HttpServletRequest{
     private Map<String, String> headers = new HashMap<>();
-    private List cookies = new ArrayList();
+    private List<Cookie> cookies = new ArrayList<>();
     private ParameterMap parameters = null; // 很简单的类，HashMap的子类，主要是增加了locked标记，锁住的时候不能修改
     private String queryString;
     private String method;
     private String protocol;
+    private int contentLength;
+    private String contentType;
     private String requestURI;
     private String requestedSessionId;
     private boolean requestedSessionURL;
 
     public HttpRequest(InputStream inputStream) {
 
+    }
+
+    public void addHeader(String name, String value) {
+        this.headers.put(name, value);
+    }
+    public void addCookie(String name, String value) {
+        Cookie cookie = new Cookie(name, value);
+        this.cookies.add(cookie);
     }
 
     public void setQueryString(String queryString) {
@@ -49,6 +59,13 @@ public class HttpRequest implements HttpServletRequest{
         this.requestURI = requestURI;
     }
 
+    public void setContentLength(int contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
     // Interface Method
     @Override
     public String getAuthType() {

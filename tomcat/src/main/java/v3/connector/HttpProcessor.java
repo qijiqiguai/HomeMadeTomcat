@@ -10,6 +10,32 @@ import java.net.Socket;
 
 /**
  * Created by wangqi on 2017/10/9.
+ *
+ * 对于Request的处理是基于HTTP协议来完成的，标准的HTTP协议包括了：
+ * 第一部分：请求信息，例如 GET /index.html HTTP/1.1
+ * 第一行的信息分成三个部分，第一部分为方法类型，第二部分是请求的目标，第三部分是协议版本。行结尾为CRLF，即\r\n。
+ * 第二部分：请求头，例如 cookie, content-type, content-length等。每一个头信息为一行，以CRLF结尾。
+ * 第三部分：空行，只有一个CRLF。
+ * 第四部分，对于POST方法存在，为POST方法体。
+ *
+ * 典型的样例：
+
+ POST /index.html HTTP/1.1
+ HOST: 127.0.0.1:8080
+ accept: application/json
+ accept-encoding: gzip
+ connection: Keep-Alive
+ content-length: 2
+ content-type: application/json
+ cookie: _ga=GA1.2.437127923.1502421211; _gid=GA1.2.1122052034.1502421211
+ pragma: no-cache
+ user-agent: okhttp/3.4.1
+
+ {json: true}
+
+ * 这里只是为了功能，大量使用了字符串切分，这实际上不是最高效的方法。Tomcat中使用的是字符数组查找和子串来提高效率。
+ * 同时，也有很多可能出现的异常没有处理，比如各种Header的内容检查、各种Header中标准的特殊字符的处理（;=:等符号）。
+ * 这里也感叹一下，严谨的工业级产品对于细节的处理确实不是简单的自己随便写写可以达到的。
  */
 public class  HttpProcessor {
     HttpRequest request;
@@ -25,7 +51,7 @@ public class  HttpProcessor {
             request = new HttpRequest(input);
             String requestStr = HttpUtil.httpRequestToString(input);
             parseRequest(requestStr);
-            // 暂时不解析请求头，下一个版本再说
+            parseHeader(requestStr);
 
 
         }catch (Exception e) {
@@ -41,6 +67,56 @@ public class  HttpProcessor {
         }
     }
 
+    private void parseHeader(String requestStr) {
+        // 根据HTTP协议，将请求体分离出去
+        String firstPart = requestStr.split("\r\n\r\n")[0];
+        String[] headers = firstPart.split("\r\n");
+        if( headers.length > 1 ) { // 不止一行的时候，证明有Header存在
+            // 从第一行开始，第0行是请求信息不属于Header
+            for( int i=1; i<headers.length; i++ ){
+                String one = headers[i].trim();
+                if(one.equals("")){
+                    continue;
+                }
+                int index = one.indexOf(":"); //由于Header键值对中可能出现值中包含冒号的情况，所以这里不能用 split
+                String name = one.substring(0, index).trim();
+                String value = one.substring(index+1).trim();
+                request.addHeader(name, value);
+
+                if(name.equals("cookie")){
+                    parseCookie(value);
+                }else if(name.equals("content-length")){
+                    try {
+                        request.setContentLength(Integer.parseInt(value));
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Content-Length should be integer");
+                    }
+                }else if(name.equals("content-type")){
+                    request.setContentType(value);
+                }
+            }
+        }
+        System.out.println(request);
+    }
+
+    // Cookie的格式 key=val; key1=val1
+    private void parseCookie(String cookieStr) {
+        String[] cookies = cookieStr.split(";");
+        if(null!=cookies && cookies.length > 0){
+            for( int i=0; i<cookies.length; i++ ){
+                String one = cookies[i];
+                int index = one.indexOf("=");
+                if( index < 0){
+                    throw new IllegalArgumentException("Cookie should be K-V pair");
+                }
+                String name = one.substring(0, index).trim();
+                String value = one.substring(index+1).trim();
+                request.addCookie(name, value);
+            }
+        }
+    }
+
+    // 处理请求的第一行，即 METHOD /xxx HTTP/1.1
     private void parseRequest(String requestStr) throws IOException, ServletException {
         // 校验首行格式， 可以更加完善
         String[] requestLine = requestStr.split("\n")[0].split(" ");
