@@ -69,8 +69,14 @@ public class  HttpProcessor {
 
     private void parseHeader(String requestStr) {
         // 根据HTTP协议，将请求体分离出去
-        String firstPart = requestStr.split("\r\n\r\n")[0];
-        String[] headers = firstPart.split("\r\n");
+        String[] requestSplit = requestStr.split("\r\n\r\n");
+
+        // 如果存在，则写入请求体
+        if( requestSplit.length > 1 ){
+            request.setRequestContent(requestSplit[1]);
+        }
+
+        String[] headers = requestSplit[0].split("\r\n");
         if( headers.length > 1 ) { // 不止一行的时候，证明有Header存在
             // 从第一行开始，第0行是请求信息不属于Header
             for( int i=1; i<headers.length; i++ ){

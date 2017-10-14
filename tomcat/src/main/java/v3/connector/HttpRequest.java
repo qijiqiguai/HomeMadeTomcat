@@ -19,6 +19,7 @@ public class HttpRequest implements HttpServletRequest{
     private String protocol;
     private int contentLength;
     private String contentType;
+    private String requestContent;
     private String requestURI;
     private String requestedSessionId;
     private boolean requestedSessionURL;
@@ -33,6 +34,10 @@ public class HttpRequest implements HttpServletRequest{
     public void addCookie(String name, String value) {
         Cookie cookie = new Cookie(name, value);
         this.cookies.add(cookie);
+    }
+
+    public void setRequestContent(String requestContent) {
+        this.requestContent = requestContent;
     }
 
     public void setQueryString(String queryString) {
