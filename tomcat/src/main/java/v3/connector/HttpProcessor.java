@@ -36,6 +36,8 @@ import java.net.Socket;
  * 这里只是为了功能，大量使用了字符串切分，这实际上不是最高效的方法。Tomcat中使用的是字符数组查找和子串来提高效率。
  * 同时，也有很多可能出现的异常没有处理，比如各种Header的内容检查、各种Header中标准的特殊字符的处理（;=:等符号）。
  * 这里也感叹一下，严谨的工业级产品对于细节的处理确实不是简单的自己随便写写可以达到的。
+ *
+ * @author wangqi
  */
 public class  HttpProcessor {
     HttpRequest request;
@@ -118,6 +120,12 @@ public class  HttpProcessor {
                 String name = one.substring(0, index).trim();
                 String value = one.substring(index+1).trim();
                 request.addCookie(name, value);
+
+                if(name.equals("jsessionid")){
+                    // 不是从URL中获取SessionID
+                    request.setRequestedSessionURL(false);
+                    request.setRequestedSessionId(value);
+                }
             }
         }
     }
@@ -181,14 +189,16 @@ public class  HttpProcessor {
      * @param path Path to be normalized
      */
     protected String normalize(String path) {
-        if (path == null)
+        if (path == null) {
             return null;
+        }
         // Create a place for the normalized path
         String normalized = path;
 
         // Normalize "/%7E" and "/%7e" at the beginning to "/~"
-        if (normalized.startsWith("/%7E") || normalized.startsWith("/%7e"))
+        if (normalized.startsWith("/%7E") || normalized.startsWith("/%7e")) {
             normalized = "/~" + normalized.substring(4);
+        }
 
         // Prevent encoding '%', '/', '.' and '\', which are special reserved
         // characters
@@ -202,20 +212,24 @@ public class  HttpProcessor {
             return null;
         }
 
-        if (normalized.equals("/."))
+        if (normalized.equals("/.")) {
             return "/";
+        }
 
         // Normalize the slashes and add leading slash if necessary
-        if (normalized.indexOf('\\') >= 0)
+        if (normalized.indexOf('\\') >= 0) {
             normalized = normalized.replace('\\', '/');
-        if (!normalized.startsWith("/"))
+        }
+        if (!normalized.startsWith("/")) {
             normalized = "/" + normalized;
+        }
 
         // Resolve occurrences of "//" in the normalized path
         while (true) {
             int index = normalized.indexOf("//");
-            if (index < 0)
+            if (index < 0) {
                 break;
+            }
             normalized = normalized.substring(0, index) +
                     normalized.substring(index + 1);
         }
@@ -223,8 +237,9 @@ public class  HttpProcessor {
         // Resolve occurrences of "/./" in the normalized path
         while (true) {
             int index = normalized.indexOf("/./");
-            if (index < 0)
+            if (index < 0) {
                 break;
+            }
             normalized = normalized.substring(0, index) +
                     normalized.substring(index + 2);
         }
@@ -232,10 +247,12 @@ public class  HttpProcessor {
         // Resolve occurrences of "/../" in the normalized path
         while (true) {
             int index = normalized.indexOf("/../");
-            if (index < 0)
+            if (index < 0) {
                 break;
-            if (index == 0)
+            }
+            if (index == 0) {
                 return (null);  // Trying to go outside our context
+            }
             int index2 = normalized.lastIndexOf('/', index - 1);
             normalized = normalized.substring(0, index2) +
                     normalized.substring(index + 3);
@@ -243,8 +260,9 @@ public class  HttpProcessor {
 
         // Declare occurrences of "/..." (three or more dots) to be invalid
         // (on some Windows platforms this walks the directory tree!!!)
-        if (normalized.indexOf("/...") >= 0)
+        if (normalized.indexOf("/...") >= 0) {
             return (null);
+        }
 
         // Return the normalized path that we have completed
         return (normalized);

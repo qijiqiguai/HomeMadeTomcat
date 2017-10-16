@@ -6,6 +6,8 @@ package util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 /**
  * 如果不按照这个标准格式输出，前端是会解析出错的
@@ -13,6 +15,7 @@ import java.io.InputStream;
  * http://blog.csdn.net/liuwenjie517333813/article/details/68060914
  */
 public class HttpUtil {
+
     /**
      * https://stackoverflow.com/questions/33972296/why-my-server-socket-hangs-on-reading-the-body-of-http-post-request
      * https://stackoverflow.com/questions/11980255/reading-request-content-from-java-socket-inputstream-always-hangs-after-header

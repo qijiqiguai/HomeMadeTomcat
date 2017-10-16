@@ -1,6 +1,7 @@
 package v3.connector;
 
 import org.apache.catalina.util.ParameterMap;
+import util.Util;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -15,7 +16,9 @@ public class HttpRequest implements HttpServletRequest{
     // 有一些Header，例如Accept-Language，会发送不止一条过来，也可能通过 ; 来分割多个值
     private Map<String, List<String>> headers = new HashMap<>();
     private List<Cookie> cookies = new ArrayList<>();
-    private ParameterMap parameters = null; // 很简单的类，HashMap的子类，主要是增加了locked标记，锁住的时候不能修改
+    private ParameterMap<String, String[]> parameters = null; // 很简单的类，HashMap的子类，主要是增加了locked标记，锁住的时候不能修改
+    private boolean parameterParsed = false;
+
     private String queryString;
     private String method;
     private String protocol;
@@ -36,26 +39,111 @@ public class HttpRequest implements HttpServletRequest{
 // 这样如果用不到参数就不解析，有一定概率可以减少CPU使用，这是一种懒加载的方式
     @Override
     public String getParameter(String name) {
-        return null;
+        if(parameterParsed){
+            String[] values = this.parameters.get(name);
+            return values.length==0 ? null : values[0];
+        }else {
+            parseParameter();
+            return getParameter(name);
+        }
     }
 
     @Override
     public Enumeration<String> getParameterNames() {
-        return null;
+        if(parameterParsed){
+            Set<String> keys = parameters.keySet();
+            final Iterator<String> it = keys.iterator();
+            return new Enumeration<String>() {
+                @Override
+                public boolean hasMoreElements() {
+                    return it.hasNext();
+                }
+                @Override
+                public String nextElement() {
+                    return it.next();
+                }
+            };
+        }else {
+            parseParameter();
+            return getParameterNames();
+        }
     }
 
     @Override
     public String[] getParameterValues(String name) {
-        return new String[0];
+        if(parameterParsed){
+            return this.parameters.get(name);
+        }else {
+            parseParameter();
+            return getParameterValues(name);
+        }
     }
 
     @Override
     public Map<String, String[]> getParameterMap() {
-        return null;
+        return this.parameters;
+    }
+
+    private void parseParameter() {
+        if (parameterParsed) {
+            return;
+        }
+        this.parameters = new ParameterMap();
+        parameters.setLocked(false);
+
+        String encoding = this.getCharacterEncoding();
+        if( null == encoding ){
+            encoding = "utf-8";
+        }
+
+        String queryString = this.getQueryString();
+        if( null != queryString && !"".equals(queryString.trim()) ){
+            parseParameters(getParameterMap(), queryString);
+        }
+
+        if( contentType == null ){
+            contentType = "";
+        }
+        if("POST".equals(method) && contentType.contains("application/x-www-form-urlencoded") && contentLength>0){
+            parseParameters(getParameterMap(), requestContent);
+        }
+
+        //最终锁住参数表，不允许修改
+        parameterParsed = true;
+        parameters.setLocked(true);
+    }
+
+    /**
+     * 这里没有考虑 encoding & urlEncoding & 多值
+     * @param map
+     * @param input
+     */
+    private void parseParameters(Map<String, String[]> map, String input) {
+        String splitter = "=";
+        if (null == input || !input.contains(splitter) ) {
+            return;
+        }
+
+        String[] kvs = input.split("&");
+        if (kvs.length > 0) {
+            for(int i=0; i<kvs.length; i++) {
+                if( kvs[i].contains(splitter) ){
+                    String key = kvs[i].split(splitter)[0].trim();
+                    String value = kvs[i].split(splitter)[1].trim();
+                    Util.addToMap(getParameterMap(), key, value);
+                }else {
+                    Util.addToMap(getParameterMap(), kvs[i], null);
+                }
+            }
+        }
+
+
     }
 
 
 // ---------- Set & Add 方法 ---------------------------------------------------
+
+
     public void addHeader(String name, String value) {
         if(!headers.containsKey(name)){
             headers.put(name, new ArrayList<>());
