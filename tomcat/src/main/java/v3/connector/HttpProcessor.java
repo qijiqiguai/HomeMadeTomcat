@@ -2,6 +2,8 @@ package v3.connector;
 
 
 import util.HttpUtil;
+import util.Util;
+
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +43,7 @@ import java.net.Socket;
  */
 public class  HttpProcessor {
     HttpRequest request;
+    HttpResponse response;
 
     public void process(Socket socket) {
         InputStream input = null;
@@ -50,14 +53,28 @@ public class  HttpProcessor {
             input = socket.getInputStream();
             output = socket.getOutputStream();
 
-            request = new HttpRequest(input);
+            request = new HttpRequest();
             String requestStr = HttpUtil.httpRequestToString(input);
             parseRequest(requestStr);
             parseHeader(requestStr);
 
+            response = new HttpResponse(output, request);
+            response.addHeader("Server", "HomeMadeTomcat");
 
+            if( request.getRequestURI().startsWith("/servlet/") ){
+                ServletProcessor processor = new ServletProcessor();
+                processor.process(request, response);
+            }else {
+                StaticProcessor processor = new StaticProcessor();
+                processor.process(request, response);
+            }
         }catch (Exception e) {
             e.printStackTrace();
+            try {
+                response.sendError(500, Util.getExceptionString(e));
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
         }finally {
             if(socket != null){
                 try {

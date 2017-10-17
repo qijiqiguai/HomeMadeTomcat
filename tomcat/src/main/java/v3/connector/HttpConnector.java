@@ -7,7 +7,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 /**
- * Created by wangqi on 2017/10/9.
+ *
+ * @author wangqi
+ * @date 2017/10/9
  */
 public class HttpConnector implements Runnable {
     boolean stopped = false;

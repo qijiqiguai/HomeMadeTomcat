@@ -1,5 +1,6 @@
 package v3.connector;
 
+import org.apache.catalina.util.Enumerator;
 import org.apache.catalina.util.ParameterMap;
 import util.Util;
 
@@ -30,7 +31,7 @@ public class HttpRequest implements HttpServletRequest{
     private String requestedSessionId;
     private boolean requestedSessionURL;
 
-    public HttpRequest(InputStream inputStream) {
+    public HttpRequest() {
 
     }
 
@@ -39,52 +40,35 @@ public class HttpRequest implements HttpServletRequest{
 // 这样如果用不到参数就不解析，有一定概率可以减少CPU使用，这是一种懒加载的方式
     @Override
     public String getParameter(String name) {
-        if(parameterParsed){
-            String[] values = this.parameters.get(name);
-            return values.length==0 ? null : values[0];
-        }else {
-            parseParameter();
-            return getParameter(name);
+        parseParameters();
+        String values[] = (String[]) parameters.get(name);
+        if (values != null) {
+            return (values[0]);
+        } else {
+            return (null);
         }
     }
 
     @Override
-    public Enumeration<String> getParameterNames() {
-        if(parameterParsed){
-            Set<String> keys = parameters.keySet();
-            final Iterator<String> it = keys.iterator();
-            return new Enumeration<String>() {
-                @Override
-                public boolean hasMoreElements() {
-                    return it.hasNext();
-                }
-                @Override
-                public String nextElement() {
-                    return it.next();
-                }
-            };
-        }else {
-            parseParameter();
-            return getParameterNames();
-        }
+    public Map getParameterMap() {
+        parseParameters();
+        return (this.parameters);
+    }
+
+    @Override
+    public Enumeration getParameterNames() {
+        parseParameters();
+        return (new Enumerator(parameters.keySet()));
     }
 
     @Override
     public String[] getParameterValues(String name) {
-        if(parameterParsed){
-            return this.parameters.get(name);
-        }else {
-            parseParameter();
-            return getParameterValues(name);
-        }
+        parseParameters();
+        String[] values = parameters.get(name);
+        return values;
     }
 
-    @Override
-    public Map<String, String[]> getParameterMap() {
-        return this.parameters;
-    }
-
-    private void parseParameter() {
+    private void parseParameters() {
         if (parameterParsed) {
             return;
         }
@@ -98,14 +82,14 @@ public class HttpRequest implements HttpServletRequest{
 
         String queryString = this.getQueryString();
         if( null != queryString && !"".equals(queryString.trim()) ){
-            parseParameters(getParameterMap(), queryString);
+            parseParameterStr(getParameterMap(), queryString);
         }
 
         if( contentType == null ){
             contentType = "";
         }
         if("POST".equals(method) && contentType.contains("application/x-www-form-urlencoded") && contentLength>0){
-            parseParameters(getParameterMap(), requestContent);
+            parseParameterStr(getParameterMap(), requestContent);
         }
 
         //最终锁住参数表，不允许修改
@@ -118,7 +102,7 @@ public class HttpRequest implements HttpServletRequest{
      * @param map
      * @param input
      */
-    private void parseParameters(Map<String, String[]> map, String input) {
+    private void parseParameterStr(Map<String, String[]> map, String input) {
         String splitter = "=";
         if (null == input || !input.contains(splitter) ) {
             return;
@@ -248,33 +232,13 @@ public class HttpRequest implements HttpServletRequest{
     @Override
     public Enumeration<String> getHeaders(String name) {
         List<String> list = headers.get(name.toLowerCase());
-        final Iterator<String> it = list.iterator();
-        return new Enumeration<String>() {
-            @Override
-            public boolean hasMoreElements() {
-                return it.hasNext();
-            }
-            @Override
-            public String nextElement() {
-                return it.next();
-            }
-        };
+        return new Enumerator(list);
     }
 
     @Override
     public Enumeration<String> getHeaderNames() {
         Set<String> keys = this.headers.keySet();
-        final Iterator<String> it = keys.iterator();
-        return new Enumeration<String>() {
-            @Override
-            public boolean hasMoreElements() {
-                return it.hasNext();
-            }
-            @Override
-            public String nextElement() {
-                return it.next();
-            }
-        };
+        return new Enumerator(keys);
     }
 
     @Override
