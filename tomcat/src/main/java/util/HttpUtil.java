@@ -9,10 +9,8 @@ import org.apache.catalina.util.DateTool;
 import javax.servlet.http.Cookie;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.text.FieldPosition;
 import java.util.Date;
-import java.util.Map;
 
 /**
  * 如果不按照这个标准格式输出，前端是会解析出错的
@@ -129,24 +127,39 @@ public class HttpUtil {
      * https://stackoverflow.com/questions/33972296/why-my-server-socket-hangs-on-reading-the-body-of-http-post-request
      * https://stackoverflow.com/questions/11980255/reading-request-content-from-java-socket-inputstream-always-hangs-after-header
      * http://blog.csdn.net/liuwenjie517333813/article/details/68060914
+     *
+     * TODO, 无法处理 Keep-Alive
      */
     public static String httpRequestToString(InputStream in) throws IOException {
+        int bufferSize = 4096;
         // Read a set of characters from the socket
-        StringBuffer request = new StringBuffer(2048);
-        int i;
-        byte[] buffer = new byte[2048];
-        try {
-            i = in.read(buffer); //从Stream中读出来多少个字节
-        } catch (IOException e) {
-            e.printStackTrace();
-            i = -1;
-        }
-        for (int j=0; j<i; j++) { //读出来多少字节，就往Buffer中写多少字节
-            request.append((char) buffer[j]);
+        StringBuffer request = new StringBuffer();
+        byte[] buffer = new byte[bufferSize];
+        int len = in.read(buffer);
+        while (len != -1){
+            //读出来多少字节，就往Buffer中写多少字节
+            for (int j=0; j<len; j++) {
+                request.append((char) buffer[j]);
+            }
+            if( len < bufferSize ){
+                len = -1;
+            }else {
+                // 在 HTTP/1.1 之后具有 Keep-Alive 能力并且是默认开启的，则 Socket.InputStream 是持续不关闭的
+                // 在这种情况下，in.read(buffer) 将持续不返还，直到客户端主动切断或者 timeout。
+                // 此时如果 请求传输来的字节数恰好是 bufferSize 的整数倍时，再调用 in.read 会由于持续读不到并且也没有关闭 Steam, 从而导致阻塞。
+                // 增加了 available 判断之后，不会在没有输入的情况下走到 in.read，从而规避了阻塞。
+                // 但是 Keep-Alive 本身就是要等后续的输入的，这里相当于没有等直接返回了，所以不能处理 Keep-Alive 的请求。
+                if( in.available() > 0 ){
+                    len = in.read(buffer);
+                }else {
+                    len = -1;
+                }
+            }
         }
         return request.toString();
     }
 
+// Http Response Wrapper
     public static String okWrapper(String input) {
         return httpMsgWrapper("200 OK", input);
     }

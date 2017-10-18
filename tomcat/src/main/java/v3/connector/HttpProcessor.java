@@ -121,7 +121,6 @@ public class  HttpProcessor {
                 }
             }
         }
-        System.out.println(request);
     }
 
     // Cookie的格式 key=val; key1=val1

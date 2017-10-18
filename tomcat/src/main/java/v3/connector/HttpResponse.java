@@ -47,8 +47,15 @@ public class HttpResponse implements HttpServletResponse{
     /**
      * call this method to send headers and response to the output
      */
-    public void finishResponse() throws IOException {
-         sendHeaders();
+    public void finishResponse(int code, String content) throws IOException {
+        this.status = code;
+        this.message = codeMsg(code);
+        if( null != content ){
+            this.contentLength = content.length();
+        }
+        sendHeaders();
+
+         writer.println(content);
         // Flush and close the appropriate output mechanism
         if (writer != null) {
             writer.flush();
@@ -133,12 +140,12 @@ public class HttpResponse implements HttpServletResponse{
 // Implemented APIs
     @Override
     public void sendError(int sc, String msg) throws IOException {
-        HttpUtil.msgWrapper(sc, codeMsg(sc), msg);
+        finishResponse(sc, msg);
     }
 
     @Override
     public void sendError(int sc) throws IOException {
-        HttpUtil.msgWrapper(sc, codeMsg(sc), null);
+        finishResponse(sc, "Default Error Message: Unexpected Error!");
     }
 
     private String codeMsg(int status){

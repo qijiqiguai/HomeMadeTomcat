@@ -82,14 +82,14 @@ public class HttpRequest implements HttpServletRequest{
 
         String queryString = this.getQueryString();
         if( null != queryString && !"".equals(queryString.trim()) ){
-            parseParameterStr(getParameterMap(), queryString);
+            parseParameterStr(this.parameters, queryString);
         }
 
         if( contentType == null ){
             contentType = "";
         }
         if("POST".equals(method) && contentType.contains("application/x-www-form-urlencoded") && contentLength>0){
-            parseParameterStr(getParameterMap(), requestContent);
+            parseParameterStr(this.parameters, requestContent);
         }
 
         //最终锁住参数表，不允许修改
@@ -114,9 +114,9 @@ public class HttpRequest implements HttpServletRequest{
                 if( kvs[i].contains(splitter) ){
                     String key = kvs[i].split(splitter)[0].trim();
                     String value = kvs[i].split(splitter)[1].trim();
-                    Util.addToMap(getParameterMap(), key, value);
+                    Util.addToMap(this.parameters, key, value);
                 }else {
-                    Util.addToMap(getParameterMap(), kvs[i], null);
+                    Util.addToMap(this.parameters, kvs[i], null);
                 }
             }
         }

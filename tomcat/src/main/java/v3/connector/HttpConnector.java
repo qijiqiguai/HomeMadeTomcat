@@ -18,7 +18,7 @@ public class HttpConnector implements Runnable {
     @Override
     public void run() {
         ServerSocket serverSocket = null;
-        int port = 8080;
+        int port = 8989;
         String ip = "127.0.0.1";
         try{
             serverSocket = new ServerSocket(port, 1, InetAddress.getByName(ip)); //基础还是基于Socket的编程

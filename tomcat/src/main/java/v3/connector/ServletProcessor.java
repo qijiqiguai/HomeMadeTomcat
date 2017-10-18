@@ -25,7 +25,7 @@ import java.net.URLClassLoader;
  * 而不是根据字符串找到特定方法来完成处理。
  */
 public class ServletProcessor {
-    public static final String SERVLET_BASE = "v3.servlet.servlets.";
+    public static final String SERVLET_BASE = "v3.connector.servlets.";
 
     public void process(HttpServletRequest request, HttpServletResponse response) {
         String uri = request.getRequestURI();
@@ -36,7 +36,6 @@ public class ServletProcessor {
             Servlet servlet = (Servlet) clazz.newInstance();
             servlet.service( request, response );
         } catch (Exception e) {
-            e.printStackTrace();
             try {
                 response.sendError(500, Util.getExceptionString(e));
             } catch (IOException e1) {
