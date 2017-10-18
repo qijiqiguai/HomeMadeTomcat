@@ -2,13 +2,7 @@ package v3.connector;
 
 import util.FileUtil;
 import util.Util;
-import v2.servlet.RequestFacade;
-import v2.servlet.ResponseFacade;
-import v2.servlet.ServletRequestImpl;
-import v2.servlet.ServletResponseImpl;
-
 import javax.servlet.Servlet;
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;

@@ -1,8 +1,6 @@
 package v3.connector;
 
 import util.HttpUtil;
-import util.Util;
-
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;

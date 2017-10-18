@@ -39,6 +39,8 @@ import java.net.Socket;
  * 同时，也有很多可能出现的异常没有处理，比如各种Header的内容检查、各种Header中标准的特殊字符的处理（;=:等符号）。
  * 这里也感叹一下，严谨的工业级产品对于细节的处理确实不是简单的自己随便写写可以达到的。
  *
+ * 同时对于 Http1.1 开始支持的 Keep-Alive 特性也没有处理，这一部分不影响整体流程的理解。
+ *
  * @author wangqi
  */
 public class  HttpProcessor {
