@@ -1,4 +1,4 @@
-package v2.servlet.servlets;
+package demo.servlets;
 
 import util.HttpUtil;
 

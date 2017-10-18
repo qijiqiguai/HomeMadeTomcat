@@ -19,7 +19,7 @@ import java.net.URLClassLoader;
  * 而不是根据字符串找到特定方法来完成处理。
  */
 public class ServletProcessor {
-    public static final String SERVLET_BASE = "v3.connector.servlets.";
+    public static final String SERVLET_BASE = "demo.servlets.";
 
     public void process(HttpServletRequest request, HttpServletResponse response) {
         String uri = request.getRequestURI();

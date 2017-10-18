@@ -15,7 +15,7 @@ import java.net.URLClassLoader;
  * 而不是根据字符串找到特定方法来完成处理。
  */
 public class ServletProcessor {
-    public static final String SERVLET_BASE = "v2.servlet.servlets.";
+    public static final String SERVLET_BASE = "demo.servlets.";
 
     public void process(ServletRequestImpl request, ServletResponseImpl response) {
         String uri = request.getUri();
