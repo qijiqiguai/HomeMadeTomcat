@@ -1,19 +1,19 @@
 package v4.container.valve;
 
-import org.apache.catalina.Container;
+
 import org.apache.catalina.Valve;
 import org.apache.catalina.comet.CometEvent;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
-
 import javax.servlet.ServletException;
 import java.io.IOException;
 
 /**
- * Created by wangqi on 2017/10/18 下午8:00.
+ *
+ * @author wangqi
+ * @date 2017/10/18 下午8:00
  */
 public class RequestHeaderLogValve implements Valve {
-    protected Container container;
     protected Valve next;
 
     @Override

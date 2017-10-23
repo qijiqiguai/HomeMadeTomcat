@@ -13,11 +13,17 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 
 /**
- * Created by wangqi on 2017/10/18 下午7:59.
+ *
+ * @author wangqi
+ * @date 2017/10/18 下午7:59
  */
 public final class SimpleBasicValve implements Valve, Contained {
     protected Container container;
-    protected static final String info = "HomeMadeTomcatSimpleBasicValve";
+    protected static final String info = "SimpleBasicValve";
+
+    public SimpleBasicValve(Container container) {
+        this.container = container;
+    }
 
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {

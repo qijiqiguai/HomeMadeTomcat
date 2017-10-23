@@ -4,6 +4,7 @@ import org.apache.catalina.*;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.juli.logging.Log;
+import v4.container.valve.SimpleBasicValve;
 
 import javax.management.ObjectName;
 import javax.naming.directory.DirContext;
@@ -14,7 +15,101 @@ import javax.servlet.UnavailableException;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 
+/**
+ * @author wangqi
+ */
 public class SimpleWrapper implements Wrapper {
+
+  private Servlet instance = null;
+  private String servletClass;
+  private Loader loader;
+  private SimplePipeline pipeline = new SimplePipeline(this);
+  protected Container parent = null;
+
+  public SimpleWrapper() {
+    pipeline.setBasic(new SimpleBasicValve(this));
+  }
+
+  @Override
+  public String getServletClass() {
+    return this.servletClass;
+  }
+
+  @Override
+  public void setServletClass(String servletClass) {
+    this.servletClass = servletClass;
+  }
+
+  @Override
+  public Loader getLoader() {
+    return this.loader;
+  }
+
+  @Override
+  public void setLoader(Loader loader) {
+    this.loader = loader;
+  }
+
+  @Override
+  public Servlet allocate() throws ServletException {
+    // Load and initialize our instance if necessary
+    if (instance==null) {
+      try {
+        instance = loadServlet();
+      } catch (ServletException e) {
+        throw e;
+      } catch (Throwable e) {
+        throw new ServletException("Cannot allocate a servlet instance", e);
+      }
+    }
+    return instance;
+  }
+
+  private Servlet loadServlet() throws ServletException {
+    if (instance!=null) {
+      return instance;
+    }
+
+    Servlet servlet = null;
+    String actualClass = servletClass;
+    if (actualClass == null) {
+      throw new ServletException("servlet class has not been specified");
+    }
+
+    Loader loader = getLoader();
+    // Acquire an instance of the class loader to be used
+    if (loader==null) {
+      throw new ServletException("No loader.");
+    }
+    ClassLoader classLoader = loader.getClassLoader();
+
+    // Load the specified servlet class from the appropriate class loader
+    Class classClass = null;
+    try {
+      if (classLoader!=null) {
+        classClass = classLoader.loadClass(actualClass);
+      }
+    }
+    catch (ClassNotFoundException e) {
+      throw new ServletException("Servlet class not found");
+    }
+    // Instantiate and initialize an instance of the servlet class itself
+    try {
+      servlet = (Servlet) classClass.newInstance();
+    }
+    catch (Throwable e) {
+      throw new ServletException("Failed to instantiate servlet");
+    }
+
+    // Call the initialization method of this servlet
+    try {
+      servlet.init(null);
+    }
+    catch (Throwable f) {
+      throw new ServletException("Failed initialize servlet.");
+    }
+    return servlet;
+  }
 
 
   @Override
@@ -58,16 +153,6 @@ public class SimpleWrapper implements Wrapper {
   }
 
   @Override
-  public String getServletClass() {
-    return null;
-  }
-
-  @Override
-  public void setServletClass(String servletClass) {
-
-  }
-
-  @Override
   public String[] getServletMethods() throws ServletException {
     return new String[0];
   }
@@ -105,11 +190,6 @@ public class SimpleWrapper implements Wrapper {
   @Override
   public void addSecurityReference(String name, String link) {
 
-  }
-
-  @Override
-  public Servlet allocate() throws ServletException {
-    return null;
   }
 
   @Override
@@ -215,16 +295,6 @@ public class SimpleWrapper implements Wrapper {
   @Override
   public String getInfo() {
     return null;
-  }
-
-  @Override
-  public Loader getLoader() {
-    return null;
-  }
-
-  @Override
-  public void setLoader(Loader loader) {
-
   }
 
   @Override

@@ -1,6 +1,5 @@
 package v4.container.valve;
 
-import org.apache.catalina.Container;
 import org.apache.catalina.Valve;
 import org.apache.catalina.comet.CometEvent;
 import org.apache.catalina.connector.Request;
@@ -13,7 +12,6 @@ import java.io.IOException;
  * Created by wangqi on 2017/10/18 下午8:00.
  */
 public class CurrentTimeLogValve implements Valve {
-    protected Container container;
     protected Valve next;
 
     @Override

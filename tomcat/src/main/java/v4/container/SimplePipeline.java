@@ -8,12 +8,19 @@ import org.apache.catalina.Valve;
 import java.util.ArrayList;
 
 /**
- * Created by wangqi on 2017/10/18 下午7:59.
+ *
+ * @author wangqi
+ * @date 2017/10/18 下午7:59
  */
-public class SimplePipline implements Pipeline, Contained {
+public class SimplePipeline implements Pipeline, Contained {
     Valve basicValve;
     ArrayList<Valve> valves = new ArrayList<>();
     Container container;
+
+
+    public SimplePipeline(Container container) {
+        this.container = container;
+    }
 
     @Override
     public Valve getBasic() {
