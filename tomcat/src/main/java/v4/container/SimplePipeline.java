@@ -28,7 +28,11 @@ public class SimplePipeline implements Pipeline, Contained, InvokePatch {
     @Override
     public void invoke(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         InvokePatch first = (InvokePatch)this.getFirst();
-        first.invoke(request, response);
+        if( null == first ){
+            ((InvokePatch)basicValve).invoke(request, response);
+        }else {
+            first.invoke(request, response);
+        }
     }
 
     public SimplePipeline(Container container) {
