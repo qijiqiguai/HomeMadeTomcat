@@ -4,6 +4,7 @@ import org.apache.catalina.*;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.juli.logging.Log;
+import v4.container.http.InvokePatch;
 import v4.container.valve.SimpleBasicValve;
 
 import javax.management.ObjectName;
@@ -12,22 +13,35 @@ import javax.servlet.MultipartConfigElement;
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 
 /**
  * @author wangqi
  */
-public class SimpleWrapper implements Wrapper {
+public class SimpleWrapper implements Wrapper, InvokePatch {
 
-  private Servlet instance = null;
+  private Servlet instance;
   private String servletClass;
   private Loader loader;
-  private SimplePipeline pipeline = new SimplePipeline(this);
-  protected Container parent = null;
+  private SimplePipeline pipeline;
+  protected Container parent;
 
   public SimpleWrapper() {
+    pipeline = new SimplePipeline(this);
     pipeline.setBasic(new SimpleBasicValve(this));
+  }
+
+  @Override
+  public void invoke(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    this.pipeline.invoke(request, response);
+  }
+
+  @Override
+  public void invoke(Request request, Response response) throws IOException, ServletException {
+
   }
 
   @Override
@@ -56,8 +70,6 @@ public class SimpleWrapper implements Wrapper {
     if (instance==null) {
       try {
         instance = loadServlet();
-      } catch (ServletException e) {
-        throw e;
       } catch (Throwable e) {
         throw new ServletException("Cannot allocate a servlet instance", e);
       }
@@ -65,50 +77,14 @@ public class SimpleWrapper implements Wrapper {
     return instance;
   }
 
-  private Servlet loadServlet() throws ServletException {
-    if (instance!=null) {
+  private Servlet loadServlet() throws ServletException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    if (instance != null) {
       return instance;
     }
-
-    Servlet servlet = null;
-    String actualClass = servletClass;
-    if (actualClass == null) {
-      throw new ServletException("servlet class has not been specified");
-    }
-
-    Loader loader = getLoader();
-    // Acquire an instance of the class loader to be used
-    if (loader==null) {
-      throw new ServletException("No loader.");
-    }
-    ClassLoader classLoader = loader.getClassLoader();
-
-    // Load the specified servlet class from the appropriate class loader
-    Class classClass = null;
-    try {
-      if (classLoader!=null) {
-        classClass = classLoader.loadClass(actualClass);
-      }
-    }
-    catch (ClassNotFoundException e) {
-      throw new ServletException("Servlet class not found");
-    }
-    // Instantiate and initialize an instance of the servlet class itself
-    try {
-      servlet = (Servlet) classClass.newInstance();
-    }
-    catch (Throwable e) {
-      throw new ServletException("Failed to instantiate servlet");
-    }
-
-    // Call the initialization method of this servlet
-    try {
-      servlet.init(null);
-    }
-    catch (Throwable f) {
-      throw new ServletException("Failed initialize servlet.");
-    }
-    return servlet;
+    Class clazz = loader.getClassLoader().loadClass( SimpleLoader.SERVLET_BASE + servletClass);
+    Servlet servlet = (Servlet) clazz.newInstance();
+    this.instance = servlet;
+    return instance;
   }
 
 
@@ -324,7 +300,7 @@ public class SimpleWrapper implements Wrapper {
 
   @Override
   public Pipeline getPipeline() {
-    return null;
+    return this.pipeline;
   }
 
   @Override
@@ -430,11 +406,6 @@ public class SimpleWrapper implements Wrapper {
   @Override
   public ContainerListener[] findContainerListeners() {
     return new ContainerListener[0];
-  }
-
-  @Override
-  public void invoke(Request request, Response response) throws IOException, ServletException {
-
   }
 
   @Override

@@ -11,6 +11,7 @@ import java.io.IOException;
  *
  * 由于 Tomcat 7.0 中的 Container.invoke 方法用的不是 HttpServletRequest&HttpServletResponse
  * 导致 V3 中的Processor 和 HttpRequest&HttpResponse 无法在 V4 中复用。所以创建一个补丁接口，实现兼容。
+ * Wrapper、Pipeline、Valve、Context 都有 invoke 方法，所以都需要继承这个接口。
  */
 public interface InvokePatch {
 

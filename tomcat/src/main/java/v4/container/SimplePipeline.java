@@ -4,7 +4,15 @@ import org.apache.catalina.Contained;
 import org.apache.catalina.Container;
 import org.apache.catalina.Pipeline;
 import org.apache.catalina.Valve;
+import org.apache.catalina.connector.Request;
+import org.apache.catalina.connector.Response;
+import v4.container.http.InvokePatch;
 
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -12,11 +20,16 @@ import java.util.ArrayList;
  * @author wangqi
  * @date 2017/10/18 下午7:59
  */
-public class SimplePipeline implements Pipeline, Contained {
+public class SimplePipeline implements Pipeline, Contained, InvokePatch {
     Valve basicValve;
     ArrayList<Valve> valves = new ArrayList<>();
     Container container;
 
+    @Override
+    public void invoke(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        InvokePatch first = (InvokePatch)this.getFirst();
+        first.invoke(request, response);
+    }
 
     public SimplePipeline(Container container) {
         this.container = container;

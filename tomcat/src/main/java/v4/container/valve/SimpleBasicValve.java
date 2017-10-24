@@ -7,9 +7,12 @@ import org.apache.catalina.comet.CometEvent;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import v4.container.SimpleWrapper;
+import v4.container.http.InvokePatch;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
@@ -17,7 +20,7 @@ import java.io.IOException;
  * @author wangqi
  * @date 2017/10/18 下午7:59
  */
-public final class SimpleBasicValve implements Valve, Contained {
+public final class SimpleBasicValve implements Valve, Contained, InvokePatch {
     protected Container container;
     protected static final String info = "SimpleBasicValve";
 
@@ -27,6 +30,15 @@ public final class SimpleBasicValve implements Valve, Contained {
 
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {
+        if( container instanceof SimpleWrapper){
+            SimpleWrapper sw = (SimpleWrapper) container;
+            Servlet servlet = sw.allocate();
+            servlet.service(request, response);
+        }
+    }
+
+    @Override
+    public void invoke(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         if( container instanceof SimpleWrapper){
             SimpleWrapper sw = (SimpleWrapper) container;
             Servlet servlet = sw.allocate();

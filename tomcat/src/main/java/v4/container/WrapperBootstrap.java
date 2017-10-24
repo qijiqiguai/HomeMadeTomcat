@@ -14,13 +14,11 @@ import java.io.IOException;
  */
 public class WrapperBootstrap {
     public static void main(String[] args) {
-        SimpleHttpConnector connector = new SimpleHttpConnector();
-
         Loader loader = new SimpleLoader();
         Wrapper wrapper = new SimpleWrapper();
+        SimpleHttpConnector connector = new SimpleHttpConnector(wrapper);
         wrapper.setServletClass("HelloServlet");
         wrapper.setLoader(loader);
-        connector.setContainer(wrapper);
 
         Valve timeVal = new CurrentTimeLogValve();
         Valve headerVal = new RequestHeaderLogValve();

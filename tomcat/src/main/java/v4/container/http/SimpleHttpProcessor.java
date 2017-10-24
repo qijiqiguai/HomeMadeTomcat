@@ -77,11 +77,7 @@ public class SimpleHttpProcessor {
             response.addHeader("Server", "HomeMadeTomcat");
 
             if( request.getRequestURI().startsWith("/servlet/") ){
-                if( container instanceof Wrapper){
-                    Wrapper wrapper = (Wrapper) container;
-                    Servlet servlet = wrapper.allocate();
-                    servlet.service(request, response);
-                }
+                ((InvokePatch)container).invoke(request, response);
             }else {
                 StaticProcessor processor = new StaticProcessor();
                 processor.process(request, response);

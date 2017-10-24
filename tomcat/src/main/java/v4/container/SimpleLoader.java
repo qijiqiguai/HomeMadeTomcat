@@ -3,7 +3,14 @@ package v4.container;
 import org.apache.catalina.Container;
 import org.apache.catalina.Loader;
 import util.FileUtil;
+import util.Util;
+
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -21,7 +28,7 @@ public class SimpleLoader implements Loader {
     public SimpleLoader(){
         ClassLoader classLoader = FileUtil.class.getClassLoader();
         URL repository = classLoader.getResource(""); // 当前Classloader的根目录
-        classLoader = new URLClassLoader( new URL[] { repository } );
+        this.classLoader = new URLClassLoader( new URL[] { repository } );
     }
 
     @Override
@@ -31,7 +38,7 @@ public class SimpleLoader implements Loader {
 
     @Override
     public ClassLoader getClassLoader() {
-        return null;
+        return this.classLoader;
     }
 
     @Override
