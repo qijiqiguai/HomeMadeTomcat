@@ -20,6 +20,8 @@ import java.io.IOException;
 
 /**
  * @author wangqi
+ *
+ * Connector -> Processor -> Wrapper -> Pipeline -> Valves -> BasicValves -> Wrapper -> Loader -> Servlet -> process(Request, Response)
  */
 public class SimpleWrapper implements Wrapper, InvokePatch {
 
