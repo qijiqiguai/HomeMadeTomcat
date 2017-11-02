@@ -1,5 +1,7 @@
 package v6.loader;
 
+import demo.servlets.HeaderServlet;
+
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -17,71 +19,104 @@ import java.util.concurrent.ConcurrentHashMap;
  * 同时，开启后台线程定期刷新类文件，防止有更新发生。
  */
 public class WebAppClassloader extends ClassLoader {
-    private boolean enableReload;
+    private boolean autoReload;
 
-    protected Map<String, Class> loadedClass = new ConcurrentHashMap<>();
-    protected Set<String> notFoundClass = Collections.synchronizedSet(new HashSet<>());
+    private Map<String, Class> loadedClass = new ConcurrentHashMap<>();
+    private Set<String> notFoundClass = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * 在系统Classloader 找不到的情况下，是否委托 父加载器
       */
-    protected boolean delegate = false;
-    protected ClassLoader parent = null;
+    private boolean delegate = false;
+    private ClassLoader parent = null;
 
     /**
      * The list of local repositories, in the order they should be searched
      * for locally loaded classes or resources.
      */
-    protected URL[] repositories;
-    protected ClassLoader repositoriesLoader;
+    private URL[] repositories;
+    private ClassLoader repositoriesLoader;
 
     /**
      * 不允许加载的类
      */
-    protected Set<String> triggers = new HashSet<>();
+    private Set<String> triggers = new HashSet<>();
 
     /**
      * 不允许加载的包
      */
-    protected Set<String> packageTriggers = new HashSet<>();
+    private Set<String> packageTriggers = new HashSet<>();
+
+    public static void main(String[] args) {
+        WebAppClassloader loader = new WebAppClassloader();
+        try {
+            Class clazz = loader.loadClass("demo.servlets.HeaderServlet");
+            HeaderServlet instance = (HeaderServlet)clazz.newInstance();
+            System.out.println(instance);
+            loader.goLoadClass();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        loader.goLoadClass();
+        System.out.print( loader.loadedClass );
+    }
+
+    public WebAppClassloader(){
+        this( false, false, null, null, null, null );
+    }
 
     public WebAppClassloader(
-            boolean enableReload,
+            boolean autoReload,
             boolean delegate,
             ClassLoader parentLoader,
-            String[] repositoriePaths,
-            Set<String> triggers, Set<String> packageTriggers
+            String[] repositoriesPaths,
+            Set<String> triggers,
+            Set<String> packageTriggers
     ){
-        this.enableReload = enableReload;
+        this.autoReload = autoReload;
         this.delegate = delegate;
         this.parent = parentLoader;
         if(null == parent){
             this.delegate = false;
         }
-        this.triggers = triggers;
-        this.packageTriggers = packageTriggers;
+        this.triggers = triggers==null ? new HashSet<>() : triggers;
+        this.packageTriggers = packageTriggers==null ? new HashSet<>() : packageTriggers;
 
         if( triggers==null || triggers.size()==0 ){
+            triggers = new HashSet<>();
             triggers.add("javax.servlet.Servlet");
         }
 
         ClassLoader classLoader = this.getClass().getClassLoader();
-        URL classesURL = classLoader.getResource("/WEB-INF/classes");
-        URL libURL = classLoader.getResource("/WEB-INF/lib/");
+        URL classesURL = classLoader.getResource("WEB-INF/classes");
+        URL libURL = classLoader.getResource("WEB-INF/lib/");
+//        URL rootUrl = classLoader.getResource("");
 
-        if( null!=repositoriePaths && repositoriePaths.length>0){
-            List<URL> rep = new ArrayList<>();
-            for(int i=0; i<repositoriePaths.length; i++){
-                URL url = classLoader.getResource(repositoriePaths[i]);
-                rep.add(url);
+        List<URL> rep = new ArrayList<>();
+        if( null!=repositoriesPaths && repositoriesPaths.length>0){
+            for(int i = 0; i< repositoriesPaths.length; i++){
+                String path = repositoriesPaths[i];
+                // 防止设置相对路径，搞到根目录外面去
+                if( !path.contains("..") ){
+                    URL url = classLoader.getResource(path);
+                    rep.add(url);
+                }
             }
-            rep.add(classesURL);
-            rep.add(libURL);
-            repositories = rep.toArray( new URL[rep.size()] );
-        }else {
-            repositories = new URL[]{ classesURL, libURL };
         }
+        if( null != classesURL ){
+            rep.add(classesURL);
+        }
+        if( null != libURL ){
+            rep.add(libURL);
+        }
+//        if( null != rootUrl ){
+//            rep.add(rootUrl);
+//        }
+        repositories = rep.toArray( new URL[rep.size()] );
         repositoriesLoader = new URLClassLoader(repositories);
+
+//        goLoadCalss();
     }
 
 
@@ -182,15 +217,21 @@ public class WebAppClassloader extends ClassLoader {
             clazz = loadedClass.get(fullName);
         }
 
-        int lastDot = fullName.lastIndexOf(".");
-        String packName = fullName.substring(0, lastDot);
         if( null==clazz
             && !notFoundClass.contains(fullName)
             && !triggers.contains(fullName)
-            && !packageTriggers.contains(packName)
             && repositories.length > 0
         ) {
-            clazz = repositoriesLoader.loadClass( fullName );
+            int lastDot = fullName.lastIndexOf(".");
+            if( lastDot > 0 ){
+                String packName = fullName.substring(0, lastDot);
+                if( !packageTriggers.contains(packName) ){
+                    clazz = repositoriesLoader.loadClass( fullName );
+                }
+            }else {
+                clazz = repositoriesLoader.loadClass( fullName );
+            }
+
         }
 
         if( null == clazz){
@@ -203,30 +244,60 @@ public class WebAppClassloader extends ClassLoader {
     }
 
     public void backgroundProcess() {
+        goLoadClass();
+    }
+
+    private void goLoadClass(){
         for(int j=0; j<repositories.length; j++){
             try {
                 String basePath = repositories[j].toURI().getRawPath();
-                File dir = new File(basePath);
-                if (dir.isDirectory()) {
-                    String[] currentFileList = dir.list();
-                    for( int i=0; i<currentFileList.length; i++ ){
-                        String fileName = currentFileList[i];
-                        if (fileName.endsWith("class")) {
-                            String filePath = basePath + "/" + fileName;
-                            File file = new File(filePath);
-                            if (!file.isDirectory()) {
-                                long lastModifiedGap = System.currentTimeMillis() - file.lastModified();
-                                // 如果是15秒以内更新的，这个值可以改成可配置的
-                                if( lastModifiedGap <= 15*1000 || loadedClass.containsKey(fileName)){
-                                    loadedClass.put(fileName, repositoriesLoader.loadClass(fileName));
-                                }
+                Map<String, Long> res = listLastModifiedTime(basePath);
+                res.keySet().forEach( key -> {
+                    if( key.endsWith(".class") ){
+                        long lastMt = res.get(key);
+                        long lastModifiedGap = System.currentTimeMillis() - lastMt;
+                        // 如果是最近 15秒(这个值可以改成可配置的) 内更新的，或者没有被加载过
+                        String classFullName = key.replace(".class", "");
+                        if( lastModifiedGap <= 15*1000 || !loadedClass.containsKey(classFullName)){
+                            try {
+                                loadedClass.put(classFullName, repositoriesLoader.loadClass(classFullName));
+                            } catch (ClassNotFoundException e) {
+                                System.err.println( "Class Not Found:" + classFullName + " " + e.getLocalizedMessage() );
                             }
                         }
                     }
-                }
+                });
             } catch (Exception e) {
                 System.err.println(repositories[j].toString() + " -> " + e.getLocalizedMessage());
             }
         }
+    }
+
+    private Map<String, Long> listLastModifiedTime(String basePath){
+        return listLastModifiedTime(basePath, null);
+    }
+    private Map<String, Long> listLastModifiedTime(String basePath, String nameSeed){
+        Map<String, Long> res = new HashMap<>();
+        File file = new File(basePath);
+        if( file.isFile() ){
+            Long lastMT = file.lastModified();
+            res.put(nameSeed, lastMT);
+        }else {
+            // 这是一个目录，则列举目录下所有内容
+            String[] currentFileList = file.list();
+            for( int i=0; i<currentFileList.length; i++ ){
+                String fileName = currentFileList[i];
+                String filePath = basePath + "/" + fileName;
+//                File subFile = new File(filePath);
+                Map<String, Long> current;
+                if (null != nameSeed) {
+                    current = listLastModifiedTime(filePath, nameSeed+"."+fileName);
+                }else {
+                    current = listLastModifiedTime(filePath, fileName);
+                }
+                res.putAll(current);
+            }
+        }
+        return res;
     }
 }
