@@ -1,7 +1,5 @@
 package v6.loader;
 
-import demo.servlets.HeaderServlet;
-
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -18,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * 同时，开启后台线程定期刷新类文件，防止有更新发生。
  */
-public class WebAppClassloader extends ClassLoader {
+public class SimpleWebAppClassloader extends ClassLoader {
     private boolean autoReload;
 
     private Map<String, Class> loadedClass = new ConcurrentHashMap<>();
@@ -48,25 +46,22 @@ public class WebAppClassloader extends ClassLoader {
     private Set<String> packageTriggers = new HashSet<>();
 
     public static void main(String[] args) {
-        WebAppClassloader loader = new WebAppClassloader();
+        SimpleWebAppClassloader loader = new SimpleWebAppClassloader();
         try {
-            Class clazz = loader.loadClass("demo.servlets.HeaderServlet");
-            HeaderServlet instance = (HeaderServlet)clazz.newInstance();
-            System.out.println(instance);
-            loader.goLoadClass();
+            Class clazz = loader.loadClass("util.Util");
+            System.out.println(clazz);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         loader.goLoadClass();
         System.out.print( loader.loadedClass );
     }
 
-    public WebAppClassloader(){
+    public SimpleWebAppClassloader(){
         this( false, false, null, null, null, null );
     }
 
-    public WebAppClassloader(
+    public SimpleWebAppClassloader(
             boolean autoReload,
             boolean delegate,
             ClassLoader parentLoader,
@@ -116,7 +111,7 @@ public class WebAppClassloader extends ClassLoader {
         repositories = rep.toArray( new URL[rep.size()] );
         repositoriesLoader = new URLClassLoader(repositories);
 
-//        goLoadCalss();
+        goLoadClass();
     }
 
 
